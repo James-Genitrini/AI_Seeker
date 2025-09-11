@@ -1,35 +1,36 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Bonus.h"
-
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 
-// Sets default values
 ABonus::ABonus()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("BoxCollision");
 	RootComponent = BoxCollision;
 
-	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
 	StaticMesh->SetupAttachment(RootComponent);
+
+	StaticMesh->SetSimulatePhysics(true);
+	StaticMesh->SetEnableGravity(true);
+	StaticMesh->SetMobility(EComponentMobility::Movable);
 }
 
-// Called when the game starts or when spawned
 void ABonus::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
 void ABonus::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// If under catcher AI destroy the Actor
+	float ZPos = GetActorLocation().Z;
+	if (ZPos < MinZToDestroy)
+	{
+		Destroy();
+	}
 }
-
