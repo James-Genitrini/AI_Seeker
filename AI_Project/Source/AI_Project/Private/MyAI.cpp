@@ -17,12 +17,19 @@ AMyAI::AMyAI()
 
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("BoxCollision");
 	RootComponent = BoxCollision;
-
+	
+	BoxRadius = 64.f;
+	
+	BoxCollision->InitBoxExtent(FVector(BoxRadius));
+	BoxCollision->SetCollisionProfileName("Trigger");
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	StaticMesh->SetupAttachment(RootComponent);
 	
 	MovementComponent = CreateDefaultSubobject<UPawnMovementComponent, UFloatingPawnMovement>(TEXT("MovementComponent"));
 	MovementComponent->UpdatedComponent = BoxCollision;
+	
+	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &AMyAI::OnOverlapBegin);
+
 }
 
 // Called when the game starts or when spawned
@@ -57,6 +64,21 @@ FVector AMyAI::Seek(FVector TargetLocation)
 	vSteering = vSteering.GetClampedToMaxSize(MovementComponent->GetMaxSpeed());
 
 	return vSteering;
+}
+
+void AMyAI::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (OtherActor && OtherActor->IsA(ABonus::StaticClass()))
+	{
+		OtherActor->Destroy();;
+    	
+    	TArray<AActor*> OverlappingActors;
+    	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABonus::StaticClass(), OverlappingActors);
+    	if (OverlappingActors.Num() > 0)
+    	{
+    		NextBonus = OverlappingActors[0];
+    	}
+	}
 }
 
 
