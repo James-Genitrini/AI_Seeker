@@ -27,9 +27,9 @@ void AThrowerAI::BeginPlay()
 	
 }
 
-FVector AThrowerAI::Seek(FVector TargetLocation)
+FVector AThrowerAI::Seek(FVector Target)
 {
-	FVector vDesiredLocation = TargetLocation - GetActorLocation();
+	FVector vDesiredLocation = Target - GetActorLocation();
 
 	// ON ingore X et Z
 	vDesiredLocation.X = 0.f;
@@ -48,8 +48,7 @@ FVector AThrowerAI::Seek(FVector TargetLocation)
 	return vSteering;
 }
 
-float Elapsed = 1.f;
-FVector TargetLocation;
+
 
 // Called every frame
 void AThrowerAI::Tick(float DeltaTime)
@@ -64,15 +63,21 @@ void AThrowerAI::Tick(float DeltaTime)
 	{
 		Elapsed = 0.f;
 
-		float RandomY = FMath::RandRange(-500.f, 1000.f);
+		float RandomY = FMath::RandRange(-400.f, 900.f);
 		TargetLocation = FVector(currentLocation.X, RandomY, currentLocation.Z);
 
 		if (BonusClass && FMath::RandBool())   // 50% de chance
 		{
-			FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -100.f);
+			FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -120.f);
 			FRotator SpawnRotation = FRotator::ZeroRotator;
+			
+			ABonus* NewBonus = GetWorld()->SpawnActor<ABonus>(BonusClass, SpawnLocation, SpawnRotation);
+			if (NewBonus)
+			{
+				NewBonus->OwnerThrower = this;
+				ActiveBonuses.Add(NewBonus);
+			}
 
-			GetWorld()->SpawnActor<ABonus>(BonusClass, SpawnLocation, SpawnRotation);
 		}
 	}
 

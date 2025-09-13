@@ -4,11 +4,13 @@
 #include "GameFramework/Actor.h"
 #include "Bonus.generated.h"
 
+class AThrowerAI;
+
 UCLASS()
 class AI_PROJECT_API ABonus : public AActor
 {
 	GENERATED_BODY()
-    
+
 public:    
 	ABonus();
 
@@ -25,5 +27,13 @@ public:
 	class UStaticMeshComponent* StaticMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Bonus")
-	float MinZToDestroy = -500.f;
+	float MinZToDestroy = -300.f;
+
+	UFUNCTION()
+	void HandleDestroyed(AActor* DestroyedActor);
+
+	UPROPERTY()
+	AThrowerAI* OwnerThrower = nullptr;
+
+	float BoxRadius = 64.f; // ou la taille que tu veux
 };

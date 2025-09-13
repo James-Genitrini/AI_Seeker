@@ -19,18 +19,26 @@ class AI_PROJECT_API AThrowerAI : public APawn
 	UPROPERTY(Category = Pawn, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UPawnMovementComponent* MovementComponent;
 
-	UPROPERTY(EditAnywhere, Category="Spawn")
-	TSubclassOf<ABonus> BonusClass;
+
+	float Elapsed = 1.f;
+	FVector TargetLocation;
+
 
 public:
 	// Sets default values for this pawn's properties
 	AThrowerAI();
 
+	UPROPERTY(BlueprintReadWrite)
+	TArray<ABonus*> ActiveBonuses;
+
+	UPROPERTY(EditAnywhere, Category="Spawn")
+	TSubclassOf<ABonus> BonusClass;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	FVector Seek(FVector TargetLocation);
+	FVector Seek(FVector Target);
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

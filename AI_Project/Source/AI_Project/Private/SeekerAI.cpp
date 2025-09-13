@@ -1,92 +1,85 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "SeekerAI.h"
 #include "Bonus.h"
+#include "ThrowerAI.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
 
-// Sets default values
 ASeekerAI::ASeekerAI()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
-	BoxCollision = CreateDefaultSubobject<UBoxComponent>("BoxCollision");
-	RootComponent = BoxCollision;
-	
-	BoxRadius = 64.f;
-	
-	BoxCollision->InitBoxExtent(FVector(BoxRadius));
-	BoxCollision->SetCollisionProfileName("Trigger");
-	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMesh->SetupAttachment(RootComponent);
-	
-	MovementComponent = CreateDefaultSubobject<UPawnMovementComponent, UFloatingPawnMovement>(TEXT("MovementComponent"));
-	MovementComponent->UpdatedComponent = BoxCollision;
-	
-	BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &ASeekerAI::OnOverlapBegin);
+    BoxCollision = CreateDefaultSubobject<UBoxComponent>("BoxCollision");
+    RootComponent = BoxCollision;
+    BoxCollision->InitBoxExtent(FVector(BoxRadius));
+    BoxCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic")); // overlap pour déclencher OnOverlapBegin
+    BoxCollision->SetGenerateOverlapEvents(true);
+
+    StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+    StaticMesh->SetupAttachment(RootComponent);
+
+    MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
+    MovementComponent->UpdatedComponent = RootComponent;
+
+    BoxCollision->OnComponentBeginOverlap.AddDynamic(this, &ASeekerAI::OnOverlapBegin);
 }
 
-// Called when the game starts or when spawned
 void ASeekerAI::BeginPlay()
 {
-	Super::BeginPlay();
-
-	TArray<AActor*> OverlappingActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABonus::StaticClass(), OverlappingActors);
-	if (OverlappingActors.Num() > 0)
-	{
-		NextBonus = OverlappingActors[0];
-	}
+    Super::BeginPlay();
+    Thrower = Cast<AThrowerAI>(UGameplayStatics::GetActorOfClass(GetWorld(), AThrowerAI::StaticClass()));
 }
 
-FVector ASeekerAI::Seek(FVector TargetLocation)
+FVector ASeekerAI::Seek(const FVector& Target)
 {
-	FVector vDesiredLocation = TargetLocation - GetActorLocation();
+    FVector vDesiredLocation = Target - GetActorLocation();
+    vDesiredLocation.X = 0.f;
+    vDesiredLocation.Z = 0.f;
+    vDesiredLocation.Normalize();
+    vDesiredLocation *= MovementComponent->GetMaxSpeed();
 
-	// On ignore X et Z
-	vDesiredLocation.X = 0.f;
-	vDesiredLocation.Z = 0.f;
+    FVector vSteering = vDesiredLocation - MovementComponent->Velocity;
+    vSteering.X = 0.f;
+    vSteering.Z = 0.f;
 
-	vDesiredLocation.Normalize();
-	vDesiredLocation *= MovementComponent->GetMaxSpeed();
-
-	FVector vSteering = vDesiredLocation - MovementComponent->Velocity;
-
-	vSteering.X = 0.f;
-	vSteering.Z = 0.f;
-
-	vSteering = vSteering.GetClampedToMaxSize(MovementComponent->GetMaxSpeed());
-
-	return vSteering;
+    return vSteering.GetClampedToMaxSize(MovementComponent->GetMaxSpeed());
 }
 
-void ASeekerAI::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ASeekerAI::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
+    class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor->IsA(ABonus::StaticClass()))
-	{
-		OtherActor->Destroy();;
-    	
-		TArray<AActor*> OverlappingActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABonus::StaticClass(), OverlappingActors);
-		if (OverlappingActors.Num() > 0)
-		{
-			NextBonus = OverlappingActors[0];
-		}
-	}
+    ABonus* Bonus = Cast<ABonus>(OtherActor);
+    if (Bonus)
+    {
+        if (CollectParticles)
+        {
+            UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), CollectParticles, Bonus->GetActorLocation(), FRotator::ZeroRotator, true);
+        }
+        
+        Bonus->Destroy();
+    }
 }
 
 
-// Called every frame
 void ASeekerAI::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
-	if (NextBonus)
-	{
-		MovementComponent->AddInputVector(Seek(NextBonus->GetActorLocation()));
-	}
+    if (Thrower && Thrower->ActiveBonuses.Num() > 0)
+    {
+        // Prendre juste le premier bonus de la liste
+        NextBonus = Thrower->ActiveBonuses[0];
+    } else
+    {
+        NextBonus = nullptr;
+    }
+
+    if (NextBonus && MovementComponent)
+    {
+        MovementComponent->AddInputVector(Seek(NextBonus->GetActorLocation()));
+    } else
+    {
+        MovementComponent->AddInputVector(Seek(Thrower->GetActorLocation()));
+    }
 }

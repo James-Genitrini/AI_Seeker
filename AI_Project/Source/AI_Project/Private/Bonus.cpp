@@ -1,6 +1,8 @@
 #include "Bonus.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "ThrowerAI.h"
+#include "Kismet/GameplayStatics.h"
 
 ABonus::ABonus()
 {
@@ -9,18 +11,32 @@ ABonus::ABonus()
 
 	BoxCollision = CreateDefaultSubobject<UBoxComponent>("BoxCollision");
 	RootComponent = BoxCollision;
+	BoxCollision->InitBoxExtent(FVector(BoxRadius));
+	BoxCollision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
+	BoxCollision->SetGenerateOverlapEvents(true);
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
 	StaticMesh->SetupAttachment(RootComponent);
-
-	StaticMesh->SetSimulatePhysics(true);
+	StaticMesh->SetSimulatePhysics(false);
 	StaticMesh->SetEnableGravity(true);
 	StaticMesh->SetMobility(EComponentMobility::Movable);
 }
 
+
+void ABonus::HandleDestroyed(AActor* DestroyedActor)
+{
+	if (OwnerThrower)
+	{
+		OwnerThrower->ActiveBonuses.Remove(this);
+	}
+}
+
+
 void ABonus::BeginPlay()
 {
 	Super::BeginPlay();
+
+	OnDestroyed.AddDynamic(this, &ABonus::HandleDestroyed);
 }
 
 void ABonus::Tick(float DeltaTime)
