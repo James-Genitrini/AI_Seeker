@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Blueprint/UserWidget.h"
 #include "ThrowerAI.generated.h"
 
 class ABonus;
@@ -19,7 +20,6 @@ class AI_PROJECT_API AThrowerAI : public APawn
 	UPROPERTY(Category = Pawn, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UPawnMovementComponent* MovementComponent;
 
-
 	float Elapsed = 1.f;
 	FVector TargetLocation;
 
@@ -33,6 +33,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Spawn")
 	TSubclassOf<ABonus> BonusClass;
+	
+	UPROPERTY(BlueprintReadWrite, Category="UI")
+	UUserWidget* BonusCounterWidgetInstance = nullptr;
 
 protected:
 	// Called when the game starts or when spawned

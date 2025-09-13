@@ -1,16 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ThrowerAI.h"
 #include "Bonus.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 
-// Sets default values
 AThrowerAI::AThrowerAI()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// UE_LOG(LogTemp, Warning, TEXT("AThrowerAI CONSTRUCTEUR"));
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	RootComponent = StaticMesh;
@@ -20,18 +17,27 @@ AThrowerAI::AThrowerAI()
 	MovementComponent->SetPlaneConstraintNormal(FVector(0,0,1));
 }
 
-// Called when the game starts or when spawned
 void AThrowerAI::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// UE_LOG(LogTemp, Warning, TEXT("BeginPlay AThrowerAI lancé"));
+
+	// if (BonusCounterWidgetInstance)
+	// {
+	// 	UE_LOG(LogTemp, Warning, TEXT("BonusCounterWidgetInstance est déjà assigné depuis le Level Blueprint."));
+	// }
+	// else
+	// {
+	// 	UE_LOG(LogTemp, Error, TEXT("BonusCounterWidgetInstance n'est pas assigné ! Assure-toi de le connecter dans le Level Blueprint."));
+	// }
 }
 
 FVector AThrowerAI::Seek(FVector Target)
 {
 	FVector vDesiredLocation = Target - GetActorLocation();
 
-	// ON ingore X et Z
+	// Ignorer X et Z
 	vDesiredLocation.X = 0.f;
 	vDesiredLocation.Z = 0.f;
 
@@ -39,16 +45,11 @@ FVector AThrowerAI::Seek(FVector Target)
 	vDesiredLocation *= MovementComponent->GetMaxSpeed();
 
 	FVector vSteering = vDesiredLocation - MovementComponent->Velocity;
-
 	vSteering.X = 0.f;
 	vSteering.Z = 0.f;
 
-	vSteering = vSteering.GetClampedToMaxSize(MovementComponent->GetMaxSpeed());
-
-	return vSteering;
+	return vSteering.GetClampedToMaxSize(MovementComponent->GetMaxSpeed());
 }
-
-
 
 // Called every frame
 void AThrowerAI::Tick(float DeltaTime)
@@ -76,8 +77,17 @@ void AThrowerAI::Tick(float DeltaTime)
 			{
 				NewBonus->OwnerThrower = this;
 				ActiveBonuses.Add(NewBonus);
-			}
 
+				// Appel de la fonction Blueprint sur le widget déjà assigné
+				if (BonusCounterWidgetInstance)
+				{
+					if (UFunction* Func = BonusCounterWidgetInstance->FindFunction(TEXT("IncrementThrown")))
+					{
+						BonusCounterWidgetInstance->ProcessEvent(Func, nullptr);
+						UE_LOG(LogTemp, Warning, TEXT("IncrementThrown appelé !"));
+					}
+				}
+			}
 		}
 	}
 

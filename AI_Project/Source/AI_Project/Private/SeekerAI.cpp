@@ -58,6 +58,14 @@ void ASeekerAI::OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class 
         }
         
         Bonus->Destroy();
+
+        if (BonusCounterWidgetInstance)
+        {
+            if (UFunction* Func = BonusCounterWidgetInstance->FindFunction(TEXT("IncrementCollected")))
+            {
+                BonusCounterWidgetInstance->ProcessEvent(Func, nullptr);
+            }
+        }
     }
 }
 

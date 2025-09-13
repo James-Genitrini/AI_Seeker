@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Blueprint/UserWidget.h"
 #include "SeekerAI.generated.h"
 
 class ABonus;
@@ -15,6 +16,9 @@ class AI_PROJECT_API ASeekerAI : public APawn
 public:
 	ASeekerAI();
 
+	UPROPERTY(BlueprintReadWrite, Category="UI")
+	UUserWidget* BonusCounterWidgetInstance = nullptr;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -23,12 +27,11 @@ protected:
 
 	UFUNCTION()
 	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
-		class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UPROPERTY(EditAnywhere, Category="Effects")
 	class UParticleSystem* CollectParticles;
 
-protected:
 	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* BoxCollision;
 
