@@ -66,7 +66,12 @@ void AThrowerAI::Tick(float DeltaTime)
 
 		float RandomY = FMath::RandRange(-400.f, 900.f);
 		TargetLocation = FVector(currentLocation.X, RandomY, currentLocation.Z);
+		
+	}
 
+	// Random de 1% de chance / tick
+	if (FMath::RandRange(0, 100) <= 1)
+	{
 		if (BonusClass && FMath::RandBool())   // 50% de chance
 		{
 			FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -120.f);
