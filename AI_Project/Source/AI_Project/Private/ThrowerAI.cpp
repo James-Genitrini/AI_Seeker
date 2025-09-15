@@ -55,46 +55,60 @@ FVector AThrowerAI::Seek(FVector Target)
 void AThrowerAI::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	Elapsed += DeltaTime;
-
+	
 	FVector currentLocation = GetActorLocation();
 
-	if (Elapsed >= 1.0f)
+	// Drop lorsqu'on atteind le seek et uniquement la position du seek
+	// UE_LOG(LogTemp, Warning, TEXT("%lld"), FMath::RoundToInt(currentLocation.Y));
+	// UE_LOG(LogTemp, Warning, TEXT("%lld"), FMath::RoundToInt(TargetLocation.Y));
+	if (FMath::RoundToInt(currentLocation.Y) == FMath::RoundToInt(TargetLocation.Y))
 	{
-		Elapsed = 0.f;
+		FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -120.f);
+		FRotator SpawnRotation = FRotator::ZeroRotator;
+			
+		ABonus* NewBonus = GetWorld()->SpawnActor<ABonus>(BonusClass, SpawnLocation, SpawnRotation);
+
+		NewBonus->OwnerThrower = this;
+		ActiveBonuses.Add(NewBonus);
+
+		if (BonusCounterWidgetInstance)
+		{
+			if (UFunction* Func = BonusCounterWidgetInstance->FindFunction(TEXT("IncrementThrown")))
+			{
+				BonusCounterWidgetInstance->ProcessEvent(Func, nullptr);
+				UE_LOG(LogTemp, Warning, TEXT("IncrementThrown appelé !"));
+			}
+		}
 
 		float RandomY = FMath::RandRange(-400.f, 900.f);
 		TargetLocation = FVector(currentLocation.X, RandomY, currentLocation.Z);
-		
+
 	}
 
 	// Random de 1% de chance / tick
-	if (FMath::RandRange(0, 100) <= 1)
-	{
-		if (BonusClass && FMath::RandBool())   // 50% de chance
-		{
-			FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -120.f);
-			FRotator SpawnRotation = FRotator::ZeroRotator;
-			
-			ABonus* NewBonus = GetWorld()->SpawnActor<ABonus>(BonusClass, SpawnLocation, SpawnRotation);
-			if (NewBonus)
-			{
-				NewBonus->OwnerThrower = this;
-				ActiveBonuses.Add(NewBonus);
+	// if (FMath::RandRange(0, 100) <= 1)
+	// {
+	// 	if (BonusClass && FMath::RandBool())
+	// 	{
+	// 		FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -120.f);
+	// 		FRotator SpawnRotation = FRotator::ZeroRotator;
+	// 		
+	// 		ABonus* NewBonus = GetWorld()->SpawnActor<ABonus>(BonusClass, SpawnLocation, SpawnRotation);
+	//
+	// 		NewBonus->OwnerThrower = this;
+	// 		ActiveBonuses.Add(NewBonus);
+	//
+	// 		if (BonusCounterWidgetInstance)
+	// 		{
+	// 			if (UFunction* Func = BonusCounterWidgetInstance->FindFunction(TEXT("IncrementThrown")))
+	// 			{
+	// 				BonusCounterWidgetInstance->ProcessEvent(Func, nullptr);
+	// 				UE_LOG(LogTemp, Warning, TEXT("IncrementThrown appelé !"));
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-				// Appel de la fonction Blueprint sur le widget déjà assigné
-				if (BonusCounterWidgetInstance)
-				{
-					if (UFunction* Func = BonusCounterWidgetInstance->FindFunction(TEXT("IncrementThrown")))
-					{
-						BonusCounterWidgetInstance->ProcessEvent(Func, nullptr);
-						UE_LOG(LogTemp, Warning, TEXT("IncrementThrown appelé !"));
-					}
-				}
-			}
-		}
-	}
-
+	
 	MovementComponent->AddInputVector(Seek(TargetLocation));
 }
