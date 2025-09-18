@@ -61,7 +61,8 @@ void AThrowerAI::Tick(float DeltaTime)
 	// Drop lorsqu'on atteind le seek et uniquement la position du seek
 	// UE_LOG(LogTemp, Warning, TEXT("%lld"), FMath::RoundToInt(currentLocation.Y));
 	// UE_LOG(LogTemp, Warning, TEXT("%lld"), FMath::RoundToInt(TargetLocation.Y));
-	if (FMath::RoundToInt(currentLocation.Y) == FMath::RoundToInt(TargetLocation.Y))
+	float Tolerance = 1.0f;
+	if (FMath::IsNearlyEqual(currentLocation.Y, TargetLocation.Y, Tolerance))
 	{
 		FVector SpawnLocation = currentLocation + FVector(0.f, 0.f, -120.f);
 		FRotator SpawnRotation = FRotator::ZeroRotator;
